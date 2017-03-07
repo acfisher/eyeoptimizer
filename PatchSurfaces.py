@@ -1,7 +1,8 @@
 import numpy as np
+import math
 
-class Patch:
-    def __init__(self, x0, y0, x1, y1, z00, z01, z10, z11):
+class Patch(object):
+    def __init__(self, x0, y0, x1, y1, z00, z01, z10, z11):        
         dx = x1 - x0
         dy = y1 - y0
 
@@ -12,53 +13,67 @@ class Patch:
         self.d = z00 - self.a*x0 - self.b*y0 - self.c*x0*y0
 
     def getZ(self, x, y):
-        return self.a * self.x + self.b * self.y + self.c*self.x*self.y + self.d
+        return self.a*x + self.b*y + self.c*x*y + self.d
+
+    def isPointBefore(self, p):
+        return p[2] < self.getZ(p[0], p[1])
+
+    def isPointAfter(self, p):
+        return p[2] > self.getZ(p[0], p[1])
 
     def getNormal(self, x0, y0):
         #The tangent plane satisfies
         # z - z0 = fx(x0,y0)(x-x0) + fy(x0,y0)(y-y0)
         fx = self.a + self.c*y0
         fy = self.b + self.c*x0
-        n = np.array([fx, fy, -1])
+        n = np.array([fx, fy, -1.])
         return n / np.linalg.norm(n)
 
-    def isPointBefore(self, p):
-        patchZ = self.getZ(p[0], p[1])
-        return p[2] < patchZ
-        
-    def isPointAfter(self, p):
-        patchZ = self.getZ(p[0], p[1])
-        return p[2] > patchZ
 
-
-class PatchGrid:
+class PatchGrid(object):
     def __init__(self, x, y, z):
-        self.nx = len(x)
-        self.ny = len(y)
+        self.x = x
+        self.y = y
+        self.z = z
         self.grid = [[Patch(x[i],y[j],x[i+1],y[j+1],z[i][j],z[i][j+1],z[i+1][j],z[i+1][j+1])
-                      for j in range(self.ny-1)]
-                     for i in range(self.nx-1)]
+                      for j in range(len(y)-1)]
+                     for i in range(len(x)-1)]
         
-    def getZ(self,x0,y0)
-        i = np.searchsorted(x,x0)
-        j = np.searchsorted(y,y0)
+    def getZ(self,x0,y0):
+        (i,j) = self.getPatchIJ(x0, y0)
         return self.grid[i][j].getZ(x0, y0)
         
     def getNormal(self, x0, y0):
-        i = np.searchsorted(x,x0)
-        j = np.searchsorted(y,y0)
+        (i,j) = self.getPatchIJ(x0, y0)
         return self.grid[i][j].getNormal(x0, y0)
+
+    def isPointInRange(self, x0, y0):
+        return x0 >= self.x[0] and x0 <= self.x[-1] and y0 >= self.y[0] and y0 <= self.y[-1] 
+        
+    def getPatchIJ(self, x0, y0):
+        return (np.searchsorted(self.x,x0) - 1, np.searchsorted(self.y,y0) - 1)
         
     def isPointBefore(self, p):
-        i = np.searchsorted(x,p[0])
-        j = np.searchsorted(y,p[1])
+        (i, j) = self.getPatchIJ(p[0], p[1])
         return self.grid[i][j].isPointBefore(p)
         
     def isPointAfter(self, p):
-        i = np.searchsorted(x,p[0])
-        j = np.searchsorted(y,p[1])
+        (i,j) = self.getPatchIJ(p[0], p[1])
         return self.grid[i][j].isPointAfter(p)
         
-
-p = Patch(0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0)
-print p.getNormal(0.5, 0.5)
+class ZPlane(PatchGrid):
+    def __init__(self, rbound, z):
+        x = [-rbound, rbound]
+        y = [-rbound, rbound]
+        z = [[z,z], [z,z]]
+        super(ZPlane, self).__init__(x, y, z)
+        
+class Sphere(PatchGrid):
+    def __init__(self, z0, r0, x, y):
+        #x^2 + y^2 + (z-z0)^2 = r0^2
+        z = []
+        for i in range(len(x)):
+            z.append([])
+            for j in range(len(y)):
+                z[i].append(z0 - math.sqrt(r0**2. - x[i]**2. - y[j]**2.))
+        super(Sphere, self).__init__(x, y, z)
