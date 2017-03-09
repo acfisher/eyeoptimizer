@@ -32,13 +32,23 @@ class Patch(object):
 
 class PatchGrid(object):
     def __init__(self, x, y, z):
-        self.x = x
-        self.y = y
-        self.z = z
+        self.x = np.array(x)
+        self.y = np.array(y)
+        self.z = np.array(z)
+        self.zoff = np.zeros(np.shape(self.z))
         self.grid = [[Patch(x[i],y[j],x[i+1],y[j+1],z[i][j],z[i][j+1],z[i+1][j],z[i+1][j+1])
                       for j in range(len(y)-1)]
                      for i in range(len(x)-1)]
-        
+    
+    def setZOff(self, zoff):
+        self.zoff = np.array(zoff)
+        x = self.x
+        y = self.y
+        z = self.z + self.zoff
+        self.grid = [[Patch(x[i],y[j],x[i+1],y[j+1],z[i][j],z[i][j+1],z[i+1][j],z[i+1][j+1])
+                      for j in range(len(y)-1)]
+                     for i in range(len(x)-1)]
+    
     def getZ(self,x0,y0):
         (i,j) = self.getPatchIJ(x0, y0)
         return self.grid[i][j].getZ(x0, y0)
