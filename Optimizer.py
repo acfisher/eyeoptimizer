@@ -15,7 +15,7 @@ class Optimizer(object):
         bnds = [(-self.zoffBound, self.zoffBound) for i in range(len(phi))]
         opts = {}
         opts["disp"] = True
-        result = scipy.optimize.minimize(self.eval, phi, method="L-BFGS-B", bounds=bnds,
+        result = scipy.optimize.minimize(self.eval, phi, method="TNC", bounds=bnds,
                                          options=opts)
         return self.eval(result.x)
         

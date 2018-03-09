@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import matplotlib.pyplot as plt
 
 class Patch(object):
     def __init__(self, x0, y0, x1, y1, z00, z01, z10, z11):        
@@ -70,6 +71,21 @@ class PatchGrid(object):
     def isPointAfter(self, p):
         (i,j) = self.getPatchIJ(p[0], p[1])
         return self.grid[i][j].isPointAfter(p)
+        
+    def plot(self):
+        fig = plt.figure()
+        fig.add_subplot(111, projection='3d')
+        dims = np.shape(self.z)
+        x = self.x
+        y = self.y
+        z = self.z
+        for i in range(dims[0]-1):
+            for j in range(dims[1]-1):
+                plt.plot([x[i],x[i+1]], [y[j],y[j]], [z[i,j],z[i+1,j]], "b-")
+                plt.plot([x[i],x[i+1]], [y[j+1],y[j+1]], [z[i,j+1],z[i+1,j+1]], "b-")
+                plt.plot([x[i],x[i]], [y[j],y[j+1]], [z[i,j],z[i,j+1]], "b-")
+                plt.plot([x[i+1],x[i+1]], [y[j],y[j+1]], [z[i+1,j],z[i+1,j+1]], "b-")
+        plt.show()
         
 class ZPlane(PatchGrid):
     def __init__(self, rbound, z):

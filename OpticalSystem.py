@@ -5,6 +5,9 @@ class Interface(object):
         self.nBefore = n_before
         self.patchGrid = patch_grid
         self.nAfter = n_after
+        
+    def plot(self):
+        self.patchGrid.plot()
 
 class OpticalSystem(object):
     def __init__(self, rbound, zbound):
